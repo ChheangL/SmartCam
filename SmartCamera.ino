@@ -1,9 +1,6 @@
-#include <WiFi.h>
 #include"init.h"
-#include"SPIFFS.h"
-#include "DBstuff.h"
-
-// Replace with your network credentials
+#include <Arduino.h>
+#include "FirebaseFunction.h"
 
 
 void setup() {
@@ -15,6 +12,7 @@ void setup() {
   Serial.begin(115200);
   //---------------------------- Initalization -------------------------------------------
   initialization();
+  
   startFirebase();
 
   //--------------------------- Setup Complete ---------------------------------------------

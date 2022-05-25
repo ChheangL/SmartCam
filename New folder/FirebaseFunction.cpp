@@ -1,7 +1,4 @@
-#include "DBstuff.h"
-
-#define API_KEY "AIzaSyDr7ZHyxr3Afc81oouiyQUY_i7cx90LMmg"
-#define DATABASE_URL "https://smartcamera-188a6-default-rtdb.asia-southeast1.firebasedatabase.app/"
+#include "FirebaseFunction.h"
 
 FirebaseData fbdo;
 FirebaseAuth auth;
@@ -20,7 +17,7 @@ bool startFirebase(){
   else{
     Serial.printf("%s\n", config.signer.signupError.message.c_str());
   }
-  config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
+  //config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
   
   Firebase.begin(&config, &auth);
   Firebase.reconnectWiFi(true);
