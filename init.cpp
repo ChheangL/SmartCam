@@ -4,6 +4,9 @@
 #include "init.h"
 
 AsyncWebServer server(80);
+const char* APssid     = "ESP32-Access-Point";
+const char* APpassword = "123456789";
+
 
 
 String readFile( const char * path){
@@ -115,4 +118,37 @@ bool startServer(){
 }
 void endServer(){
   server.end();
+}
+
+void initialization(){
+  SPIFFS.begin(true);
+  
+  if (!connectToWifi(readFile("/ssid.txt").c_str(),readFile("/password.txt").c_str())){
+    Serial.print("Setting AP (Access Point)…");
+    // Remove the password parameter, if you want the AP (Access Point) to be open
+    WiFi.softAP(APssid, APpassword);
+    
+    IPAddress IP = WiFi.softAPIP();
+    Serial.print("AP IP address: ");
+    Serial.println(IP);
+    bool Wifistatus = false;
+    int previous_time = 0;
+    bool toggleLED = true;
+    while(!Wifistatus){
+      int current_time = millis();
+      if(current_time - previous_time >= 3000){
+        Wifistatus = startServer();
+        toggleLED = !toggleLED;
+        digitalWrite(4,toggleLED);
+        Serial.println(Wifistatus);
+        previous_time = current_time;
+      }
+    }
+    WiFi.softAPdisconnect(true);
+  }
+  endServer();
+  digitalWrite(4,HIGH);
+  delay(1000);
+  digitalWrite(4,LOW); //Signaling Finish Setting up
+  Serial.println("Connect to Wifi Success fully");
 }
