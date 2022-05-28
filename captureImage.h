@@ -28,6 +28,8 @@
 #define HREF_GPIO_NUM     23
 #define PCLK_GPIO_NUM     22
 
+//This part of the code are heavily based on the code provided by the ESP CAM example 
+
 bool checkPhoto( fs::FS &fs );
 void capturePhotoSaveSpiffs( void );
 void initCamera();

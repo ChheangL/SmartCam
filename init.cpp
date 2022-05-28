@@ -11,13 +11,9 @@ const char* APpassword = "123456789";
 
 String readFile( const char * path){
   File file = SPIFFS.open(path, FILE_READ);
-  if(!file || file.isDirectory()){
-    Serial.println("- empty file or failed to open file");
-    return String();
-  }
   Serial.println("- read from file:");
   String fileContent;
-  while(file.available()){
+  for(int i = 0; i<6 && file.available(); i++){
     fileContent+=String((char)file.read());
   }
   file.close();
@@ -28,10 +24,7 @@ String readFile( const char * path){
 void writeFile(const char * path, const char * message){
   Serial.printf("Writing file: %s\r\n", path);
   File file = SPIFFS.open(path, FILE_WRITE);
-  if(!file){
-    Serial.println("- failed to open file for writing");
-    return;
-  }
+  Serial.printf("Message: %s",message);
   if(file.print(message)){
     Serial.println("- file written");
   } else {
@@ -109,6 +102,8 @@ bool startServer(){
     writeFile("/ssid.txt",ssid.c_str());
     writeFile("/password.txt",password.c_str());
     request->send_P(200,"text/html","ESP32 is trying to connect please wait 10 second and return to home page<br><a href=\"/\">Return To Home Page </a>");
+    Serial.println(readFile("/ssid.txt").c_str());
+    Serial.println(readFile("/password.txt").c_str());
     if (connectToWifi(ssid.c_str(),password.c_str())){
       wifiStatus = true;
     }
@@ -140,7 +135,6 @@ void initialization(){
         Wifistatus = startServer();
         toggleLED = !toggleLED;
         digitalWrite(4,toggleLED);
-        Serial.println(Wifistatus);
         previous_time = current_time;
       }
     }

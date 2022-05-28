@@ -1,6 +1,7 @@
 #include"init.h"
 #include <Arduino.h>
 #include "FirebaseFunction.h"
+#include "captureImage.h"
 
 
 void setup() {
@@ -15,15 +16,37 @@ void setup() {
   
   startFirebase();
 
+  initCamera();
   //--------------------------- Setup Complete ---------------------------------------------
 }
 
 int timer = 0 ;
 bool Read = 0;
+unsigned int c = 0;
+unsigned int previousT =   millis();
+bool trigger = false;
+bool BuzzerOn = true;
+bool FlashOn = true;
+
 void loop(){
   Read = digitalRead(13);
-  digitalWrite(12,Read);
-  digitalWrite(4,Read);
+  trigger = get_trigger();
+  BuzzerOn = get_status("Buzzer");
+  FlashOn = get_status("Flash");
+  digitalWrite(12,(Read || trigger) && BuzzerOn);
+  digitalWrite(4,(Read|| trigger) && FlashOn);
+  if (Read || trigger &&(millis()-previousT > 2000)){
+    
+    capturePhotoSaveSpiffs();
+    bool sendImageFailed = false;
+    digitalWrite(12,false);
+    digitalWrite(4,false);
+    for (int i=0; i<5 && !sendImageFailed && checkPhoto(SPIFFS);i++ ){
+      sendImageFailed = sendImage(c);
+    }
+    c++;
+    previousT = millis();
+  }
   Serial.println(Read);
   delay(1000);
 }

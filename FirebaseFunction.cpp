@@ -7,6 +7,9 @@
  FirebaseConfig config;
 bool FirebaseStatus = false;
 
+const char* photo_file = "/data/photo";
+const char* extension = ".jpg";
+
 bool startFirebase(){
   digitalWrite(4,HIGH);
     /* Assign the api key (required) */
@@ -34,22 +37,32 @@ bool startFirebase(){
 }
 
 bool get_status(const char* var){
-  Firebase.RTDB.getInt(fbdo, "/test/"+var.c_str());
+  Firebase.RTDB.getBool(&fbdo, "/test/"+String(var));
   return fbdo.to<bool>();
 }
-bool send_imgage(unsigned int counter){
+
+bool get_trigger(){
+  
+  bool trigger = get_status("TP");
+  if(trigger){
+      Firebase.RTDB.setBool(&fbdo, "/test/TP",false);
+  }
+  return trigger;
+}
+bool sendImage(unsigned int counter){
     if (Firebase.ready()){
     Serial.print("Uploading picture... ");
-    const char* filePath = FILE_PHOTO + char(counter)+EXTENSION;
+    const char* filePath = (String(photo_file) + String(counter)+String(extension)).c_str();
+    Serial.printf(filePath);
     //MIME type should be valid to avoid the download problem.
     //The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h.
-    if (Firebase.Storage.upload(&fbdo, STORAGE_BUCKET_ID /* Firebase Storage bucket id */, FILE_PHOTO+".jpg" /* path to local file */, mem_storage_type_flash /* memory storage type, mem_storage_type_flash and mem_storage_type_sd */, filePath /* path of remote file stored in the bucket */, "image/jpeg" /* mime type */)){
+    if (Firebase.Storage.upload(&fbdo, STORAGE_BUCKET_ID /* Firebase Storage bucket id */, FILE_PHOTO /* path to local file */, mem_storage_type_flash /* memory storage type, mem_storage_type_flash and mem_storage_type_sd */, filePath /* path of remote file stored in the bucket */, "image/jpeg" /* mime type */)){
       Serial.printf("\nDownload URL: %s\n", fbdo.downloadURL().c_str());
     }
     else{
       Serial.println(fbdo.errorReason());
+      return false;
     }
-    counter ++;
-    return 
+    return true;
   }
 }
