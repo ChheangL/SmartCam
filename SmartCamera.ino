@@ -3,6 +3,8 @@
 #include "FirebaseFunction.h"
 #include "captureImage.h"
 
+//Add max number of picutre
+//Add return to 0 for count
 
 void setup() {
   pinMode(4,OUTPUT);
@@ -19,7 +21,6 @@ void setup() {
   initCamera();
   //--------------------------- Setup Complete ---------------------------------------------
 }
-
 int timer = 0 ;
 bool Read = 0;
 unsigned int c = 0;
@@ -45,6 +46,9 @@ void loop(){
       sendImageFailed = sendImage(c);
     }
     c++;
+    if(c > 50){
+      c=0;
+    }
     previousT = millis();
   }
   Serial.println(Read);
