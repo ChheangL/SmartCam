@@ -8,10 +8,12 @@
 #define STORAGE_BUCKET_ID "gs://smartcamera-188a6.appspot.com/"
 #define USER_EMAIL "lychheang008@gmail.com"
 #define USER_PASSWORD "123456"
+#define FILE_PHOTO "/data/photo"
+#define EXTENSION ".jpg"
+
 
 bool startFirebase();
 bool sendImage();
-bool getBuzzer_status();
-bool getFlash_status();
+bool get_status(const char* var);
 
 #endif
