@@ -13,7 +13,7 @@ String readFile( const char * path){
   File file = SPIFFS.open(path, FILE_READ);
   Serial.println("- read from file:");
   String fileContent;
-  for(int i = 0; i<6 && file.available(); i++){
+  for(uint8_t i = 0; i<255 && file.available(); i++){
     fileContent+=String((char)file.read());
   }
   file.close();
@@ -22,14 +22,9 @@ String readFile( const char * path){
 }
 
 void writeFile(const char * path, const char * message){
-  Serial.printf("Writing file: %s\r\n", path);
   File file = SPIFFS.open(path, FILE_WRITE);
-  Serial.printf("Message: %s",message);
-  if(file.print(message)){
-    Serial.println("- file written");
-  } else {
-    Serial.println("- write failed");
-  }
+  file.print(message);
+  file.flush();
   file.close();
 }
 
@@ -69,42 +64,38 @@ const char index_html[] PROGMEM = R"rawliteral(
   </body></html>)rawliteral";
 
 bool connectToWifi(const char* ssid, const char* password){
-  int i =0;
   WiFi.begin(ssid, password);
   int previous_time=0;
-  while (WiFi.status() != WL_CONNECTED) {
+  for(uint8_t i=0 ; i<=4 && WiFi.status() != WL_CONNECTED; ){
     int current_times = millis();
     if (current_times - previous_time >= 1000){
       Serial.println("Connecting to WiFi..");
-      if(i>4){
+      if(i==4){
         return false;
       }
       i++;
       previous_time = current_times;
     }
    }
-// Print ESP32 Local IP Address
-  Serial.println(WiFi.localIP());
   return true;
 }
 
 bool wifiStatus = false;
+
 
 bool startServer(){
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send_P(200,"text/html",index_html);
   });
   server.on("/get", HTTP_GET, [](AsyncWebServerRequest *request){
-    String ssid;
-    String password;
-    ssid = request->getParam("input1")->value();
-    password = request->getParam("input2")->value();
-    writeFile("/ssid.txt",ssid.c_str());
-    writeFile("/password.txt",password.c_str());
+    const char* ssid=request->getParam("input1")->value().c_str();
+    const char* password= request->getParam("input2")->value().c_str();
+    writeFile("/ssid.txt",ssid);
+    writeFile("/password.txt",password);
     request->send_P(200,"text/html","ESP32 is trying to connect please wait 10 second and return to home page<br><a href=\"/\">Return To Home Page </a>");
     Serial.println(readFile("/ssid.txt").c_str());
     Serial.println(readFile("/password.txt").c_str());
-    if (connectToWifi(ssid.c_str(),password.c_str())){
+    if (connectToWifi(ssid,password)){
       wifiStatus = true;
     }
   });
@@ -116,16 +107,18 @@ void endServer(){
 }
 
 void initialization(){
-  SPIFFS.begin(true);
-  
+  if (!SPIFFS.begin(true)) {
+    Serial.println("An Error has occurred while mounting SPIFFS");
+    ESP.restart();
+  }
+  else {
+    delay(500);
+    Serial.println("SPIFFS mounted successfully");
+  }
   if (!connectToWifi(readFile("/ssid.txt").c_str(),readFile("/password.txt").c_str())){
-    Serial.print("Setting AP (Access Point)…");
     // Remove the password parameter, if you want the AP (Access Point) to be open
     WiFi.softAP(APssid, APpassword);
-    
     IPAddress IP = WiFi.softAPIP();
-    Serial.print("AP IP address: ");
-    Serial.println(IP);
     bool Wifistatus = false;
     int previous_time = 0;
     bool toggleLED = true;

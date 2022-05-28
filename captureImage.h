@@ -8,7 +8,6 @@
 #include "driver/rtc_io.h"
 #include <SPIFFS.h>
 #include <FS.h>
-
 #define FILE_PHOTO "/data/photo.jpg"
 
 #define PWDN_GPIO_NUM     32

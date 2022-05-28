@@ -13,8 +13,6 @@
 
 
 
-
-
 bool startFirebase();
 bool sendImage(unsigned int counter);
 bool get_status(const char* var);
