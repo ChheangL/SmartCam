@@ -5,12 +5,15 @@
 
 //Add max number of picutre
 //Add return to 0 for count
+#define uS_TO_S_FACTOR 1000000        /* Conversion factor for micro seconds to seconds */
+#define TIME_TO_SLEEP 2              /* Time ESP32 will go to sleep for 5 minutes (in seconds) */
+
 
 void setup() {
   pinMode(4,OUTPUT);
-  pinMode(12,OUTPUT);
-  pinMode(13,INPUT);
-  digitalWrite(12,LOW);
+  pinMode(2,OUTPUT);
+  pinMode(15,INPUT);
+  digitalWrite(2,LOW);
   
   Serial.begin(115200);
   //---------------------------- Initalization -------------------------------------------
@@ -18,39 +21,59 @@ void setup() {
   
   startFirebase();
 
+  startDHT();
+
   initCamera();
   //--------------------------- Setup Complete ---------------------------------------------
 }
 int timer = 0 ;
 bool Read = 0;
-unsigned int c = 0;
+RTC_DATA_ATTR unsigned int c = 0;
 unsigned int previousT =   millis();
 bool trigger = false;
 bool BuzzerOn = true;
 bool FlashOn = true;
+bool lockMode = true;
 
 void loop(){
-  Read = digitalRead(13);
+  Read = digitalRead(15);
+  if(Read ||(millis() - previousT >= 1000)){
   trigger = get_trigger();
-  BuzzerOn = get_status("Buzzer");
-  FlashOn = get_status("Flash");
-  digitalWrite(12,(Read || trigger) && BuzzerOn);
-  digitalWrite(4,(Read|| trigger) && FlashOn);
-  if (Read || trigger &&(millis()-previousT > 2000)){
+  lockMode = get_status("lockMode");
+  updateAliveStatus();
+  sendDHT_Data();
+  if(trigger || lockMode){
     
-    capturePhotoSaveSpiffs();
-    bool sendImageFailed = false;
-    digitalWrite(12,false);
-    digitalWrite(4,false);
-    for (int i=0; i<5 && !sendImageFailed && checkPhoto(SPIFFS);i++ ){
-      sendImageFailed = sendImage(c);
+    //Serial.println(Read);
+    //Serial.println(trigger);
+    if (Read || trigger){
+        BuzzerOn = get_status("Buzzer");
+        FlashOn = get_status("Flash");
+        digitalWrite(2,(Read || trigger) && BuzzerOn);
+        digitalWrite(4,(Read|| trigger) && FlashOn);  
+      capturePhotoSaveSpiffs();
+      //bool sendImageFailed = false;
+      digitalWrite(4,false);
+  
+      //for (int i=0; i<5 && !sendImageFailed;i++ ){
+      //  sendImageFailed = 
+      sendImage(c);
+      //  delay(5000);
+      //}
+      
+      
+      c++;
+      if(c > 50){
+        c=0;
+      }
+//      esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR); //go to sleep
+//      Serial.println("Setup ESP32 to sleep for every " + String(TIME_TO_SLEEP) + " Seconds");
+//      Serial.println("Going to sleep as normal now.");
+//      esp_deep_sleep_start();
+      
+      digitalWrite(2,0);
     }
-    c++;
-    if(c > 50){
-      c=0;
-    }
-    previousT = millis();
   }
-  Serial.println(Read);
-  delay(1000);
+  previousT = millis();
+  }
 }
